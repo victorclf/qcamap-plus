@@ -1,5 +1,5 @@
 # qcamap-plus
-A user script for Qcamap which provides a set of helper functions, e.g. merge categories, duplicate a category.
+An unofficial user script for Qcamap which provides a set of helper functions, e.g. merge categories, duplicate a category.
 
 
 # How to use
@@ -9,6 +9,8 @@ A user script for Qcamap which provides a set of helper functions, e.g. merge ca
 
 Changes made with this script will only appear after refreshing the page  
 because this script is not interacting with the app code.
+
+This is EXPERIMENTAL. Make sure to BACKUP YOUR WORK. 
 
 
 # API
@@ -33,6 +35,24 @@ qm.duplicate('code X', 'code Y');
 
 // After the promise resolves, a new category called 'code Y' will exist
 // containing copies of all markers of 'code X'.
+```
+
+## Sort
+Sort all categories alphabetically.
+
+```javascript
+qm.sortCategories();
+
+// After the promise resolves, the categories will be alphabetically sorted.
+```
+
+## JSON dump
+Dumps a JSON of all coding data in the console. Useful for backuping project data.
+
+```javascript
+qm.toJSON();
+
+// Data will be in the browser console. Just copy and paste the object for backup.
 ```
 
 

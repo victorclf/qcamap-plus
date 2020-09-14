@@ -103,6 +103,21 @@ class Project {
 		return category;
 	}
 
+	async updateCategory(category) {
+		const categoriesPUTURL = `https://www.qcamap.org/api/v1/projects/${this.projectId}/researchQuestions/${this.researchQuestionId}/categories/${category.id}`;
+		const response = await fetch(categoriesPUTURL, {
+			method: 'PUT',
+			headers: {
+				'Accept': 'application/json, text/plain, */*',
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(category._data)
+		});
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+	}
+
 	* iterateMarkersOfCategory(category) {
 		for (const doc of this.documents) {
 			for (const marker of doc.markers) {
@@ -162,6 +177,51 @@ class Project {
 	async duplicate(baseCategoryName, newCategoryName) {
 		await this._duplicate(this.getCategoryByName(baseCategoryName), newCategoryName);
 		console.log(`Created a copy of ${baseCategoryName} with name ${newCategoryName}.`);
+	}
+
+	/**
+	 * Alphabetically sort all categories in order to find them more easily.
+	 */
+	async sortCategories() {
+		const compareCategoryName = (a, b) => a.name < b.name
+												? -1
+												: (a.name > b.name
+													? 1
+													: 0);
+
+		this.categories.sort(compareCategoryName);
+		for (const [index, category] of this.categories.entries()) {
+			category.ordering = index + 1; // add one because ordering in Qcamap starts from 1 instead of 0 like in JS.
+		}
+
+		// Sending all requests at once and using Promise.all() does not work for sorting.
+		for (const category of this.categories) {
+			await this.updateCategory(category);
+		}
+
+		console.log(`Sorted all ${this.categories.length} categories alphabetically.`);
+	}
+
+	/**
+	 * Dumps a JSON of all Qcamap coding data in the console. Useful for backuping project data.
+ 	 */
+	toJSON() {
+		// A simple circular reference filter from MDN: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value
+		const getCircularReplacer = () => {
+			const seen = new WeakSet();
+			return (key, value) => {
+				if (typeof value === "object" && value !== null) {
+					if (seen.has(value)) {
+						return;
+					}
+					seen.add(value);
+				}
+				return value;
+			};
+		};
+
+		// TODO Create a download link instead of dumping in console.
+		console.log(JSON.stringify(this, getCircularReplacer(), 2));
 	}
 }
 
