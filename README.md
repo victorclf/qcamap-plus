@@ -1,18 +1,22 @@
 # qcamap-plus
 A user script for Qcamap which provides a set of helper functions, e.g. merge categories, duplicate a category.
 
+
 # How to use
-1. Copy main.js into your browser console while on the coding view of Qcamap.
-2. Wait for the console message "Project loaded".
-3. Qcamap data is now available in `window.qm`.
+1. Copy the contents of `main.js` into your browser console while on the coding view of Qcamap.
+2. Wait for the console message: "Project loaded".
+3. Qcamap data is now available in `window.qm` along with the helper functions.
+
+Changes made with this script will only appear after refreshing the page  
+because this script is not interacting with the app code.
+
 
 # API
 
 ## Basic concepts
-Marker: a section of highlighted text which has a category assigned to it
+* Marker: a section of highlighted text which has a category assigned to it
 
 ## Merge
-
 Merge multiple categories. Change all markers of a list of categories to the same category.
 
 ```javascript
@@ -21,13 +25,14 @@ qm.merge('category 1', 'category 2', 'category 3', 'category 4');
 // Categories 2, 3 and 4 must be manually deleted if you want them gone.
 ```
 
-
 ## Duplicate
-```javascript
-qm.duplicate('code X');
+Creates a new category and copies all markers from another category to it.
 
-// After the promise resolves, a new category called 'code X-copy' was created
-and copies of all markers of 'code X' were created pointing to 'code X-copy'.
+```javascript
+qm.duplicate('code X', 'code Y');
+
+// After the promise resolves, a new category called 'code Y' will exist
+// containing copies of all markers of 'code X'.
 ```
 
 

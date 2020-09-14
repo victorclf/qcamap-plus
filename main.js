@@ -67,12 +67,40 @@ class Project {
 		return this.categories;
 	}
 
-	* iterateMarkers() {
-		for (const doc of this.documents) {
-			for (const marker of doc.markers) {
-				yield marker;
-			}
+	async createCategory(name) {
+		const categoryData = {
+			id: null,
+			researchQuestionId: 39860,
+			type: "C",
+			number: null,
+			ordering: null,
+			isInsignificant: null,
+			name: name,
+			color: "#E4E4E4",
+			definition: null,
+			anchorExamples: null,
+			codingRules: null,
+			mainCategoryId: null
 		}
+
+		const categoriesPOSTURL = `https://www.qcamap.org/api/v1/projects/${this.projectId}/researchQuestions/${this.researchQuestionId}/categories`;
+		const response = await fetch(categoriesPOSTURL, {
+			method: 'POST',
+			headers: {
+				'Accept': 'application/json, text/plain, */*',
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(categoryData)
+		});
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+		const json = await response.json();
+
+		const category = new Category(json);
+		this.categories.push(category);
+
+		return category;
 	}
 
 	* iterateMarkersOfCategory(category) {
@@ -114,12 +142,27 @@ class Project {
 	 */
 	async merge(baseCategoryName, ...otherCategoriesNames) {
 		await this._merge(this.getCategoryByName(baseCategoryName), ...otherCategoriesNames.map(e => this.getCategoryByName(e)));
+		console.log(`Moved markers from categories ${otherCategoriesNames} to category ${baseCategoryName}.`);
 	}
 
-	duplicate() {
-		// TODO
-		throw new Error(`Not implemented!`);
+	async _duplicate(baseCategory, newCategoryName) {
+		const newCategory = await this.createCategory(newCategoryName);
+		const promises = [];
+		for (const marker of this.iterateMarkersOfCategory(baseCategory)) {
+			promises.push(marker.document.copyMarkerToOtherCategory(marker, newCategory));
+		}
+		await Promise.all(promises);
 	};
+
+	/**
+	 * Creates a new category called newCategoryName and copies all markers of category baseCategoryName to it.
+	 * @param baseCategoryName
+	 * @param newCategoryName
+	 */
+	async duplicate(baseCategoryName, newCategoryName) {
+		await this._duplicate(this.getCategoryByName(baseCategoryName), newCategoryName);
+		console.log(`Created a copy of ${baseCategoryName} with name ${newCategoryName}.`);
+	}
 }
 
 
@@ -151,20 +194,31 @@ class Document {
 		return this.markers;
 	}
 
-	async createMarker() {
-		// const markersPOSTURL = `https://www.qcamap.org/api/v1/projects/${this.project.projectId}/researchQuestions/${this.project.researchQuestionId}/contents/${this.id}/markers`;
-		// const response = await fetch(markersPOSTURL, {
-		// 	method: 'PUT',
-		// 	headers: {
-		// 		'Accept': 'application/json, text/plain, */*',
-		// 		'Content-Type': 'application/json'
-		// 	},
-		// 	body: JSON.stringify(marker._data)
-		// });
-		// if (!response.ok) {
-		// 	throw new Error(`HTTP error! status: ${response.status}`);
-		// }
-		// TODO
+	async copyMarkerToOtherCategory(marker, otherCategory) {
+		// Using shallow copy here with Object.assign
+		const newMarkerData = Object.assign({}, marker._data);
+		newMarkerData.id = null;
+		newMarkerData.categoryId = otherCategory.id;
+
+		const markersPOSTURL = `https://www.qcamap.org/api/v1/projects/${this.project.projectId}/researchQuestions/${this.project.researchQuestionId}/contents/${this.id}/markers`;
+		const response = await fetch(markersPOSTURL, {
+			method: 'POST',
+			headers: {
+				'Accept': 'application/json, text/plain, */*',
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(newMarkerData)
+		});
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+		const json = await response.json();
+		// {"id": 123, "categoryId": 6644, "contentDefintionId":null, "researchQuestionId":398, "interCoderAgreementId":null, "start":28, "end":36};
+
+		const newMarker = new Marker(this, json);
+		this.markers.push(newMarker);
+
+		return newMarker;
 	}
 
 	async updateMarker(marker) {
@@ -180,12 +234,6 @@ class Document {
 		if (!response.ok) {
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
-	}
-
-	async deleteMarker(marker) {
-		// TODO
-		// {"DELETE":{"scheme":"https","host":"www.qcamap.org","filename":"/api/v1/projects/26562/researchQuestions/39860/contents/138986/markers/2743588","remote":{"Address":"152.199.52.147:443"}}}
-		throw new Error(`Not implemented!`);
 	}
 }
 
@@ -210,10 +258,6 @@ class Marker {
 
 	async update() {
 		await this.document.updateMarker(this);
-	}
-
-	async delete() {
-		await this.document.deleteMarker(this);
 	}
 }
 
