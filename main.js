@@ -137,17 +137,14 @@ class Project {
 	}
 
 	async _merge(baseCategory, ...otherCategories) {
-		const promises = [];
 		for (const otherCategory of otherCategories) {
 			for (const marker of this.iterateMarkersOfCategory(otherCategory)) {
 				console.log(`Changing marker (${marker.id}, ${marker.start}, ${marker.end}) from category ${otherCategory.name} to category ${baseCategory.name}`);
 				marker.categoryId = baseCategory.id;
-				const updatePromise = marker.update();
-				promises.push(updatePromise);
+				await marker.update();
 			}
 			// TODO remove empty category or rename it and leave removal up to user to avoid problems with potential bugs.
 		}
-		await Promise.all(promises);
 	};
 
 	/**
@@ -162,11 +159,9 @@ class Project {
 
 	async _duplicate(baseCategory, newCategoryName) {
 		const newCategory = await this.createCategory(newCategoryName);
-		const promises = [];
 		for (const marker of this.iterateMarkersOfCategory(baseCategory)) {
-			promises.push(marker.document.copyMarkerToOtherCategory(marker, newCategory));
+			await marker.document.copyMarkerToOtherCategory(marker, newCategory);
 		}
-		await Promise.all(promises);
 	};
 
 	/**
