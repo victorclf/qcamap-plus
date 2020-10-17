@@ -50,7 +50,7 @@ qm.sortCategories();
 Dumps a JSON of all coding data in the console. Useful for backuping project data.
 
 ```javascript
-qm.toJSON();
+qm.printJSON();
 
 // Data will be in the browser console. Just copy and paste the object for backup.
 ```

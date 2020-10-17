@@ -200,7 +200,7 @@ class Project {
 	/**
 	 * Dumps a JSON of all Qcamap coding data in the console. Useful for backuping project data.
  	 */
-	toJSON() {
+	printJSON() {
 		// A simple circular reference filter from MDN: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value
 		const getCircularReplacer = () => {
 			const seen = new WeakSet();
